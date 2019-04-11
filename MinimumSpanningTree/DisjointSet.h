@@ -1,17 +1,20 @@
 #pragma once
 #include <vector>
-
+#include <iostream>
 class DisjointSet
 {
 	typedef struct n
 	{
-		int x;
-		n* father;
+		int root,depth;
 	}Node;
-	vect
+	std::vector<Node> privNodes;
 
 public:
-	DisjointSet();
+	DisjointSet(int n);
 	~DisjointSet();
-};
+	
 
+	int getFather(int x);
+	void link(int a, int b);
+	void test();
+};

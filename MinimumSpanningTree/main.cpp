@@ -1,7 +1,8 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <queue>
-
+#include "DisjointSet.h"
 using namespace std;
 
 struct edge
@@ -14,45 +15,29 @@ bool cmp(edge a,edge b)
 	return a.c < b.c;
 }
 
-void treeUnion(int x,int y)
+void kruskal(vector<edge> edges,int n)
 {
-	//By size
-	if (count(x) < count(y))
-		swap(x, y);
-	cnt[x] += cnt[y];
-	father[y] = x;
-	//Todo by rank
-	//Heavy path decomposition
-}
-
-int findRoot(int x)
-{
-	if (father[x] != x)
-	{
-		father[x] = findRoot(father[x]);
-		return father[x];
-	}
-	return x;
-}
-
-void kruskal(vector<edge> edges)
-{
+	//Create the disjoint set
+	DisjointSet dj(n);
 	sort(edges.begin(), edges.end(), cmp);
 	vector<edge> answer;
 	for (auto e : edges)
 	{
-		//if (conex(e.x, e.y))
-		//	answer.push_back(e);
-		if (findRoot(e.x) != findRoot(e.y))
+		if (dj.getFather(e.x) != dj.getFather(e.y))
 		{
-			treeUnion(findRoot(e.x), findRoot(e.y));
+			dj.link(dj.getFather(e.x), dj.getFather(e.y));
 			answer.push_back(e);
 		}
+	}
+	//print result on screen
+	for (auto e : answer)
+	{
+		cout << (char) (e.x+'a') << " "<< (char) (e.y+'a')<<endl;
 	}
 }
 
 //PRIM
-
+/*
 void prim(vector<edge> edges)
 {
 	vector<bool> vizitat(n + 1, 0);
@@ -99,8 +84,20 @@ void prim(vector<edge> edges)
 	}
 	
 }
-
+*/
 int main()
 {
+	ifstream fin;
+	fin.open("date.in");
+	int n,m;
+	fin >> n >> m;
+	vector<edge> edges;
+	for (int i = 0; i < m; i++)
+	{
+		int x, y, c;
+		fin >> x >> y >> c;
+		edges.push_back(edge{ x,y,c });
+	}
+	kruskal(edges,n);
 
 }
