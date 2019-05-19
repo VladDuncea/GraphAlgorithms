@@ -1,4 +1,4 @@
-#if 0
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -216,4 +216,3 @@ int main()
 
 }
 
-#endif // 0
