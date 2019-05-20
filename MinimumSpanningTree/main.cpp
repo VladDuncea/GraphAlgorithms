@@ -1,19 +1,29 @@
-
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <list>
 #include "DisjointSet.h"
 using namespace std;
 
 struct edge_weight
 {
 	int x, y, c;
+	bool operator<(const edge_weight& rhs) const
+	{
+		return c > rhs.c;
+	}
 };
 
 struct edge
 {
 	int x, y;
+};
+
+struct node
+{
+	int degree;
+	list<edge_weight> edges;
 };
 
 bool cmp(edge_weight a, edge_weight b)
@@ -109,86 +119,140 @@ vector<edge> havel_hakimi(vector<int> seq)
 
 #pragma endregion
 
+#pragma region Prufer
+
+/*
+vector<int> codifPrufer(vector<edge> edges)
+{
+	return ;
+}
+*/
+vector<edge> decodifPrufer(vector<int> codif)
+{
+	//Num of nodes 
+	int n = codif.size() + 2;
+	//Vector of edges
+	vector<edge> answer;
+	//Vector of degree
+	vector<int> deg;
+	deg.resize(n,1);
+
+	for (int i = 0; i < n-2; i++)
+	{
+		deg[codif[i]]++;
+	}
+
+	int i, last,p;
+	i = p = 0;
+	last = -1;
+	while(p < n - 2)
+	{
+		if (deg[i] == 1)
+		{
+			answer.push_back({ codif[p], i });
+			deg[i] = 0;
+			deg[codif[p]]--;
+			//Set i back 
+			if (last != -1)
+			{
+				i = last;
+				last = -1;
+			}
+
+			//Check if we have a new 1 degree
+			if (deg[codif[p]] == 1)
+			{
+				last = i;
+				i = codif[p]-1;
+			}
+			p++;
+		}
+		i++;
+		
+	}
+
+	//Add the last edge
+	answer.push_back({ i,n - 1 });
+
+	return answer;
+}
+
+#pragma endregion
+
 #pragma region Kruskal
-void kruskal(vector<edge_weight> edges, int n)
+vector<edge_weight> kruskal(vector<edge_weight> edges, int n)
 {
 	//Create the disjoint set
 	DisjointSet dj(n);
 	sort(edges.begin(), edges.end(), cmp);
 	vector<edge_weight> answer;
+	int select = 0;
 	for (auto e : edges)
 	{
 		if (dj.getFather(e.x) != dj.getFather(e.y))
 		{
 			dj.link(dj.getFather(e.x), dj.getFather(e.y));
 			answer.push_back(e);
+			select++;
+			if (select == n)
+				break;
 		}
 	}
-	//print result on screen
-	for (auto e : answer)
-	{
-		cout << (char)(e.x + 'a') << " " << (char)(e.y + 'a') << endl;
-	}
+	return answer;
 }
 
 #pragma endregion
 
 #pragma region Prim
-/*
-void prim(vector<edge> edges)
+vector<edge_weight> prim(vector<edge_weight> edges,int n)
 {
-	vector<bool> vizitat(n + 1, 0);
-	vizitat[1] = 1;
-	vector<edge> answer;
-	edge chosen;
-	priority_queue<edge> Q;
-	for (edge e : edges)
+	vector<node> nodes;
+	nodes.resize(n);
+	for (auto e : edges)
+	{
+		nodes[e.x].edges.push_back(e);
+		nodes[e.y].edges.push_back(e);
+	}
+
+	vector<bool> vizitat(n, 0);
+	vizitat[0] = 1;
+	vector<edge_weight> answer;
+	edge_weight chosen= edge_weight();
+	priority_queue<edge_weight> Q;
+	for (edge_weight e : edges)
 		if (vizitat[e.x] == 1 || vizitat[e.y] == 1)
 			Q.push(e);
 
-	for (int i = 0; i < n; i++)
+	while (answer.size() < n-1)
 	{
-		int mn = INFINITY;
-		//Optiunea 1
-		for (auto e : edges)
+		chosen = Q.top();
+		Q.pop();
+		if (vizitat[chosen.x] + vizitat[chosen.y] == 1)
 		{
-			if (vizitat[e.x] + vizitat[e.y] == 1 && e.c<mn)
-			{
-					mn = e.c;
-					chosen = e;
-			}
-		}
-		//Optiunea 2 coada de prioritati
-		while (!Q.empty())
-		{
-			chosen = Q.top();
-			Q.pop();
-			if (vizitat[chosen.x] + vizitat[chosen.y] == 1)
-			{
-				if (vizitat[chosen.x] == 0)
-					swap(chosen.x, chosen.y);
-				for (auto e : adiac[chosen.y])
-					Q.push(e);
-			}
+			if (vizitat[chosen.x] == 0)
+				swap(chosen.x, chosen.y);
+			for (auto e : nodes[chosen.y].edges)
+				Q.push(e);
+
 			vizitat[chosen.x] = vizitat[chosen.y] = 1;
 			answer.push_back(chosen);
-
 		}
-
-		//Final
-		vizitat[chosen.x] = vizitat[chosen.y] = 1;
-		answer.push_back(chosen);
 	}
-
+	return answer;
 }
-*/
 #pragma endregion
 
 int main()
 {
 	///Havel Hakimi
+	/*
 	cout << "HavelHakimi \n";
 	vector<edge> answ = havel_hakimi({ 3,4,2,1,3,4,1,2 });
+	*/
+
+	///Prufer
+	cout << "Prufer \n";
+	vector<edge> answ = decodifPrufer({ 6,3,2,0,3,5,6,0 });
 	if (answ.empty())
 	{
 		cout << "Secventa incorecta\n";
@@ -198,12 +262,14 @@ int main()
 		for (auto e : answ)
 			cout << e.x + 1 << " " << e.y + 1 << "\n";
 	}
+	
 
 	ifstream fin;
-	fin.open("date.in");
+	fin.open("date2.in");
 	int n, m;
 	fin >> n >> m;
 	vector<edge_weight> edges;
+	vector<edge_weight> answer;
 	for (int i = 0; i < m; i++)
 	{
 		int x, y, c;
@@ -212,7 +278,18 @@ int main()
 	}
 
 	///Kruskal
-	//kruskal(edges,n);
+	//cout << "Kruskal \n";
+	//answer = kruskal(edges,n);
 
+	///Prim
+	cout << "Prim \n";
+	answer = prim(edges, n);
+
+
+	//print result on screen
+	for (auto e : answer)
+	{
+		cout << e.x+1 << " " << e.y + 1 << endl;
+	}
 }
 
