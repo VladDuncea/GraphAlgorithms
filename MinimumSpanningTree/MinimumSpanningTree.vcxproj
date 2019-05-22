@@ -134,6 +134,9 @@
     <None Include="date1.in" />
     <None Include="date2.in" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="date3.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

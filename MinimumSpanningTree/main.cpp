@@ -26,6 +26,15 @@ struct node
 	list<edge_weight> edges;
 };
 
+struct node_pair 
+{
+	int node, cost;
+	bool operator<(const node_pair& rhs) const
+	{
+		return cost > rhs.cost;
+	}
+};
+
 bool cmp(edge_weight a, edge_weight b)
 {
 	return a.c < b.c;
@@ -211,7 +220,6 @@ vector<edge_weight> prim(vector<edge_weight> edges,int n)
 	for (auto e : edges)
 	{
 		nodes[e.x].edges.push_back(e);
-		nodes[e.y].edges.push_back(e);
 	}
 
 	vector<bool> vizitat(n, 0);
@@ -242,6 +250,153 @@ vector<edge_weight> prim(vector<edge_weight> edges,int n)
 }
 #pragma endregion
 
+#pragma region Dijkstra
+
+vector<edge> dijkstra(vector<edge_weight> edges,int n)
+{
+	//Create adjiacence list
+	vector<node> nodes;
+	nodes.resize(n);
+	for (auto e : edges)
+	{
+		nodes[e.x].edges.push_back(e);
+	}
+
+	//Use a vector of edges as a pair (dist/father)
+	vector<edge> answer;
+	answer.resize(n, { INT_FAST32_MAX,-1 });
+	answer[0].x = 0;
+	answer[0].y = 0;
+	//Extracted vector
+	vector<bool> extracted;
+	extracted.resize(n, 0);
+	//min heap to store minimum node
+	priority_queue<node_pair> minheap;
+	minheap.push({ 0,0 });
+	int i = 0;
+	//Select n nodes
+	while(i<n)
+	{
+		//Get the node with the least 
+		node_pair n = minheap.top();
+		minheap.pop();
+		if (!extracted[n.node])
+		{
+			//Mark as extracted and increment
+			extracted[n.node] = true;
+			i++;
+			//Extracted an unreachable node
+			if (answer[n.node].x == INT_FAST32_MAX)
+				break;
+			//Relax all the edges of this node
+			for (auto e : nodes[n.node].edges)
+			{
+				//Relax
+				if (!extracted[e.y] && answer[e.y].x > answer[e.x].x + e.c)
+				{
+					//Set new distance
+					answer[e.y].x = answer[e.x].x + e.c;
+					//Set new father
+					answer[e.y].y = n.node;
+					//Put the node in the min heap
+					minheap.push({ e.y,answer[e.y].x });
+				}
+			}
+
+		}
+
+	}
+	return answer;
+}
+
+#pragma endregion
+
+#pragma region Bellman-Ford
+
+vector<edge> bellman_ford(vector<edge_weight> edges, int n)
+{
+	//Use a vector of edges as a pair (dist/father)
+	vector<edge> answer;
+	answer.resize(n, { INT_FAST32_MAX,-1 });
+	answer[0].x = 0;
+	answer[0].y = 0;
+
+	//Select n nodes
+	for (int i = 0; i < n; i++)
+	{
+		//Relax all the edges of this node
+		for (auto e : edges)
+		{
+			//Relax
+			if (answer[e.y].x > answer[e.x].x + e.c)
+			{
+				//Set new distance
+				answer[e.y].x = answer[e.x].x + e.c;
+				//Set new father
+				answer[e.y].y = e.x;
+			}
+		}
+	}
+	return answer;
+}
+#pragma endregion
+
+#pragma region TopSort
+
+vector<int> topSort(vector<edge_weight> edges, int n)
+{
+	//Degree vector
+	vector<int> degreeIn(n, 0);
+	//Answer vector
+	vector<int> answer;
+
+	//Create adjiacence list
+	vector<node> nodes;
+	nodes.resize(n);
+	for (auto e : edges)
+	{
+		nodes[e.x].edges.push_back(e);
+		degreeIn[e.y]++;
+	}
+
+	//Queue for topological sorting
+	queue<int> q;
+
+	//Put all the nodes with 0 degree in queue
+	for (int i = 0; i < n; i++)
+	{
+		if (degreeIn[i] == 0)
+			q.push(i);
+	}
+
+	while (!q.empty())
+	{
+		//Take first node out
+		int n = q.front();
+		q.pop();
+		answer.push_back(n);
+		//Delete edges
+		for (auto e : nodes[n].edges)
+		{
+			//Decrease degree
+			degreeIn[e.y]--;
+			//Add to queue if degree is 0
+			if (degreeIn[e.y] == 0)
+				q.push(e.y);
+		}
+	}
+
+	for (auto x : degreeIn)
+		if (x != 0)
+			return vector<int>();
+
+	return answer;
+}
+
+#pragma endregion
+
+
+
 int main()
 {
 	///Havel Hakimi
@@ -251,6 +406,7 @@ int main()
 	*/
 
 	///Prufer
+	/*
 	cout << "Prufer \n";
 	vector<edge> answ = decodifPrufer({ 6,3,2,0,3,5,6,0 });
 	if (answ.empty())
@@ -262,14 +418,16 @@ int main()
 		for (auto e : answ)
 			cout << e.x + 1 << " " << e.y + 1 << "\n";
 	}
-	
+	*/
 
 	ifstream fin;
-	fin.open("date2.in");
+	fin.open("date3.txt");
 	int n, m;
 	fin >> n >> m;
 	vector<edge_weight> edges;
 	vector<edge_weight> answer;
+	vector<edge> answer_2;
+	vector<int> answer_3;
 	for (int i = 0; i < m; i++)
 	{
 		int x, y, c;
@@ -282,14 +440,38 @@ int main()
 	//answer = kruskal(edges,n);
 
 	///Prim
-	cout << "Prim \n";
-	answer = prim(edges, n);
+	//cout << "Prim \n";
+	//answer = prim(edges, n);
 
+	///Dijkstra
+	//cout << "Dijkstra \n";
+	//answer_2 = dijkstra(edges, n);
+
+	///Bellman-Ford
+	//cout << "Bellman-Ford \n";
+	//answer_2 = bellman_ford(edges, n);
+
+	///Top-Sort
+	cout << "Topological Sort \n";
+	answer_3 = topSort(edges, n);
+	if (answer_3.empty())
+	{
+		cout << "Cant sort topologically\n";
+		return 0;
+	}
 
 	//print result on screen
-	for (auto e : answer)
+	/*
+	for (auto e : answer_2)
 	{
-		cout << e.x+1 << " " << e.y + 1 << endl;
+		cout << e.x << " " << e.y +1  << endl;
 	}
+	*/
+
+	for (auto x : answer_3)
+	{
+		cout << x +1<< " ";
+	}
+	cout << endl;
 }
 
