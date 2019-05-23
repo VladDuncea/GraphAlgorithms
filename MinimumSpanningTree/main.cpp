@@ -395,6 +395,14 @@ vector<int> topSort(vector<edge_weight> edges, int n)
 
 #pragma endregion
 
+#pragma region Distances in DAG
+
+vector<edge> dist_DAG(vector<edge_weight> edges, int n)
+{
+	vector<int> sortTop = topSort(edges, n);
+}
+
+#pragma endregion
 
 
 int main()
